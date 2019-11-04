@@ -19,6 +19,10 @@ func run(){
     m.Range(func(key string, value string){
         fmt.Println(key, value)
     }
+    for k, v := range m.Map(){
+        fmt.Println(k, v)
+
+    }
 }
 ```
 
