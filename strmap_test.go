@@ -8,7 +8,6 @@ import (
 	"testing"
 )
 
-
 func newSrcMap() map[string]string {
 
 	m := map[string]string{
@@ -80,7 +79,8 @@ func BenchmarkImmutabeStringMap_Range(b *testing.B) {
 	srcMap := newSrcMap()
 	m := FromMap(srcMap, indexerFactory)
 	for i := 0; i < b.N; i++ {
-		m.Range(func(s string, s2 string) {
+		m.Range(func(s string, s2 string) bool {
+			return false
 		})
 	}
 }
@@ -93,6 +93,15 @@ func BenchmarkStringMap_Range(b *testing.B) {
 		}
 	}
 }
+
+func BenchmarkImmutabeStringMap_Map(b *testing.B) {
+	srcMap := newSrcMap()
+	m := FromMap(srcMap, indexerFactory)
+	for i := 0; i < b.N; i++ {
+		m.Map()
+	}
+}
+
 func TestImmutabeStringMap_Memory(t *testing.T) {
 	runtime.GC()
 	debug.FreeOSMemory()

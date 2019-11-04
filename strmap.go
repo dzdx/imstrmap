@@ -43,6 +43,7 @@ func (i *indexer) setOffset(name string, offset int) {
 }
 
 type ImmutabeStringMap struct {
+	count   int
 	indexer indexer
 	data    []byte
 }
@@ -56,9 +57,10 @@ func (m *ImmutabeStringMap) Get(k string) (string, bool) {
 
 	v := ""
 	found := false
-	m.iter(func(ak string, av string) bool {
-		if ak == k {
-			v = av
+	kbytes := []byte(k)
+	m.iter(func(ak []byte, av []byte) bool {
+		if bytes.Equal(kbytes, ak) {
+			v = string(av)
 			found = true
 			return true
 		}
@@ -67,21 +69,29 @@ func (m *ImmutabeStringMap) Get(k string) (string, bool) {
 	return v, found
 }
 
-func (m *ImmutabeStringMap) Range(f func(string, string)) {
-	m.iter(func(s string, s2 string) bool {
-		f(s, s2)
-		return false
+func (m *ImmutabeStringMap) Range(f func(string, string) bool) {
+	m.iter(func(s []byte, s2 []byte) bool {
+		return f(string(s), string(s2))
 	})
 }
 
-func (m *ImmutabeStringMap) iter(f func(string, string) bool) {
+func (m *ImmutabeStringMap) Map() map[string]string {
+	ret := make(map[string]string, m.count)
+	m.iter(func(i []byte, i2 []byte) bool {
+		ret[string(i)] = string(i2)
+		return false
+	})
+	return ret
+}
+
+func (m *ImmutabeStringMap) iter(f func([]byte, []byte) bool) {
 	offset := 0
 	dataLen := len(m.data)
 	for offset < dataLen {
 		kLen := int(binary.BigEndian.Uint16(m.data[offset : offset+2]))
-		k := string(m.data[offset+2 : offset+2+kLen])
+		k := m.data[offset+2 : offset+2+kLen]
 		vLen := int(binary.BigEndian.Uint16(m.data[offset+2+kLen : offset+4+kLen]))
-		v := string(m.data[offset+4+kLen : offset+4+kLen+vLen])
+		v := m.data[offset+4+kLen : offset+4+kLen+vLen]
 		if stop := f(k, v); stop {
 			break
 		}
@@ -111,6 +121,7 @@ func FromMap(src map[string]string, indexerFactory func() *indexer) *ImmutabeStr
 	m := &ImmutabeStringMap{
 		indexer: *indexer,
 		data:    buf.Bytes(),
+		count:   len(src),
 	}
 	return m
 }
