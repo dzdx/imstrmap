@@ -27,7 +27,7 @@ type Indexer struct {
 	keyIndex map[string]int
 }
 
-func (i *Indexer) GetOffset(name string) int {
+func (i *Indexer) getOffset(name string) int {
 	index, ok := i.keyIndex[name]
 	if !ok {
 		return -1
@@ -35,7 +35,7 @@ func (i *Indexer) GetOffset(name string) int {
 	return i.offsets[index]
 }
 
-func (i *Indexer) SetOffset(name string, offset int) {
+func (i *Indexer) setOffset(name string, offset int) {
 	index, ok := i.keyIndex[name]
 	if ok {
 		i.offsets[index] = offset
@@ -48,7 +48,7 @@ type ImmutabeStringMap struct {
 }
 
 func (m *ImmutabeStringMap) Get(k string) (string, bool) {
-	offset := m.indexer.GetOffset(k)
+	offset := m.indexer.getOffset(k)
 	if offset >= 0 {
 		vLen := int(binary.BigEndian.Uint16(m.data[offset : offset+2]))
 		return string(m.data[offset+2 : offset+2+vLen]), true
@@ -105,7 +105,7 @@ func FromMap(src map[string]string, indexerFactory func() *Indexer) *ImmutabeStr
 		buf.WriteString(k)
 		buf.Write(vLenBytes)
 		buf.WriteString(v)
-		indexer.SetOffset(k, offset+2+kLen)
+		indexer.setOffset(k, offset+2+kLen)
 		offset += 4 + kLen + vLen
 	}
 	m := &ImmutabeStringMap{
