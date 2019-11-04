@@ -8,18 +8,6 @@ import (
 	"testing"
 )
 
-var (
-	srcMap = map[string]string{
-		"a":        "va",
-		"b":        "vb",
-		"c":        "vc",
-		"d":        "vd",
-		"ab":       "vab",
-		"abc":      "vabc",
-		"abcd":     "vabcd",
-		"locality": "vlocality",
-	}
-)
 
 func newSrcMap() map[string]string {
 
@@ -39,13 +27,13 @@ var (
 func TestStrMap(t *testing.T) {
 	g := gomega.NewGomegaWithT(t)
 
-	im := FromMap(srcMap, indexerFactory)
+	im := FromMap(newSrcMap(), indexerFactory)
 	v, ok := im.Get("locality")
 	g.Expect(v).To(gomega.Equal("vlocality"))
 	g.Expect(ok).To(gomega.Equal(true))
 
 	v, ok = im.Get("b")
-	g.Expect(v).To(gomega.Equal("vb"))
+	g.Expect(v).To(gomega.Equal("b"))
 	g.Expect(ok).To(gomega.Equal(true))
 
 	v, ok = im.Get("z")
@@ -53,12 +41,14 @@ func TestStrMap(t *testing.T) {
 }
 
 func BenchmarkNewImmutableMap(b *testing.B) {
+	srcMap := newSrcMap()
 	for i := 0; i < b.N; i++ {
 		FromMap(srcMap, indexerFactory)
 	}
 }
 
 func BenchmarkImmutabeStringMapIndexGet(b *testing.B) {
+	srcMap := newSrcMap()
 	m := FromMap(srcMap, indexerFactory)
 	for i := 0; i < b.N; i++ {
 		m.Get("locality")
@@ -68,6 +58,7 @@ func BenchmarkImmutabeStringMapIndexGet(b *testing.B) {
 }
 
 func BenchmarkImmutabeStringMapNoIndexGet(b *testing.B) {
+	srcMap := newSrcMap()
 	m := FromMap(srcMap, indexerFactory)
 	for i := 0; i < b.N; i++ {
 		m.Get("a")
@@ -77,6 +68,7 @@ func BenchmarkImmutabeStringMapNoIndexGet(b *testing.B) {
 }
 
 func BenchmarkStringMapGet(b *testing.B) {
+	srcMap := newSrcMap()
 	for i := 0; i < b.N; i++ {
 		_ = srcMap["a"]
 		_ = srcMap["b"]
@@ -85,6 +77,7 @@ func BenchmarkStringMapGet(b *testing.B) {
 }
 func BenchmarkImmutabeStringMap_Range(b *testing.B) {
 
+	srcMap := newSrcMap()
 	m := FromMap(srcMap, indexerFactory)
 	for i := 0; i < b.N; i++ {
 		m.Range(func(s string, s2 string) {
@@ -92,6 +85,8 @@ func BenchmarkImmutabeStringMap_Range(b *testing.B) {
 	}
 }
 func BenchmarkStringMap_Range(b *testing.B) {
+
+	srcMap := newSrcMap()
 	for i := 0; i < b.N; i++ {
 		for k, v := range srcMap {
 			_, _ = k, v
@@ -112,7 +107,7 @@ func TestImmutabeStringMap_Memory(t *testing.T) {
 	after := &runtime.MemStats{}
 	runtime.ReadMemStats(after)
 	fmt.Println("heap", after.HeapInuse-before.HeapInuse)
-	fmt.Printf("%p", a)
+	fmt.Printf("%p\n", a)
 }
 
 func TestStringMap_Memory(t *testing.T) {
@@ -129,5 +124,5 @@ func TestStringMap_Memory(t *testing.T) {
 	after := &runtime.MemStats{}
 	runtime.ReadMemStats(after)
 	fmt.Println("heap", after.HeapInuse-before.HeapInuse)
-	fmt.Printf("%p", a)
+	fmt.Printf("%p\n", a)
 }

@@ -5,29 +5,29 @@ import (
 	"encoding/binary"
 )
 
-func NewIndexerFactory(keys []string) func() *Indexer {
+func NewIndexerFactory(keys []string) func() *indexer {
 	keyIndex := make(map[string]int, len(keys))
 	for i, k := range keys {
 		keyIndex[k] = i
 	}
-	return func() *Indexer {
+	return func() *indexer {
 		offsets := make([]int, len(keys))
 		for i := range offsets {
 			offsets[i] = -1
 		}
-		return &Indexer{
+		return &indexer{
 			keyIndex: keyIndex,
 			offsets:  offsets,
 		}
 	}
 }
 
-type Indexer struct {
+type indexer struct {
 	offsets  []int
 	keyIndex map[string]int
 }
 
-func (i *Indexer) getOffset(name string) int {
+func (i *indexer) getOffset(name string) int {
 	index, ok := i.keyIndex[name]
 	if !ok {
 		return -1
@@ -35,7 +35,7 @@ func (i *Indexer) getOffset(name string) int {
 	return i.offsets[index]
 }
 
-func (i *Indexer) setOffset(name string, offset int) {
+func (i *indexer) setOffset(name string, offset int) {
 	index, ok := i.keyIndex[name]
 	if ok {
 		i.offsets[index] = offset
@@ -43,7 +43,7 @@ func (i *Indexer) setOffset(name string, offset int) {
 }
 
 type ImmutabeStringMap struct {
-	indexer Indexer
+	indexer indexer
 	data    []byte
 }
 
@@ -89,7 +89,7 @@ func (m *ImmutabeStringMap) iter(f func(string, string) bool) {
 	}
 }
 
-func FromMap(src map[string]string, indexerFactory func() *Indexer) *ImmutabeStringMap {
+func FromMap(src map[string]string, indexerFactory func() *indexer) *ImmutabeStringMap {
 	indexer := indexerFactory()
 	var buf bytes.Buffer
 	var offset int
